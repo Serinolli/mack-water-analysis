@@ -1,32 +1,29 @@
+print("Code started at target ESP32!")
+
 from machine import Pin, ADC
 import time
 import network
 import ujson
 from umqtt.simple import MQTTClient
 
-# CONFIGURAÇÕES
-SSID = "SuaRedeWiFi"         
-PASSWORD = "SuaSenhaWiFi"  
+ph_sensor = ADC(Pin(32))  # Potenciômetro para pH (GPIO32)
+turbidity_sensor = ADC(Pin(33))  # Potenciômetro para turbidez (GPIO33)
+relay = Pin(17, Pin.OUT)  # Relé (GPIO17)
 
+for adc in [ph_sensor, turbidity_sensor]:
+    adc.atten(ADC.ATTN_11DB)  # Atenuação para 0-3.6V
+    adc.width(ADC.WIDTH_10BIT)  # Resolução de 10 bits (0-1023)
+
+# Wi-fi
+SSID = "Wokwi-GUEST"  
+PASSWORD = ""
+
+# MQTT
 MQTT_BROKER = "test.mosquitto.org"
+MQTT_PORT = 1883
 MQTT_TOPIC = "water/quality"
+MQTT_CLIENT_ID = "esp32_water_monitor"
 
-# LEDs
-led_blue = Pin(5, Pin.OUT)     # LED azul = início da leitura
-led_ph = Pin(12, Pin.OUT)      # LED verde para pH
-led_turb = Pin(14, Pin.OUT)    # LED verde para turbidez
-led_temp = Pin(27, Pin.OUT)    # LED verde para temperatura
-
-# ADC (Sensores simulados)
-adc_ph = ADC(Pin(32))       # Sensor de pH
-adc_turb = ADC(Pin(33))     # Sensor de turbidez
-adc_temp = ADC(Pin(34))     # Sensor de temperatura
-
-for adc in [adc_ph, adc_turb, adc_temp]:
-    adc.atten(ADC.ATTN_11DB)
-    adc.width(ADC.WIDTH_10BIT)
-
-# Conecta à rede Wi-Fi
 def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -36,41 +33,62 @@ def connect_wifi():
         time.sleep(0.5)
     print("Conectado:", wlan.ifconfig())
 
-# Conecta ao broker MQTT
 def connect_mqtt():
-    client = MQTTClient("esp32client", MQTT_BROKER)
+    client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER, port=MQTT_PORT)
     client.connect()
     print("MQTT conectado.")
     return client
 
-# Lê um sensor e acende o LED correspondente por 1 segundo
-def read_sensor(adc, led):
-    led.on()
-    time.sleep(1)
-    value = adc.read()
-    led.off()
-    return value
+def read_ph():
+    value = ph_sensor.read()  # Valor bruto (0-1023)
+    print("pH raw value:", value)  # Debug: valor bruto do ADC
+    voltage = value * 3.6 / 1023  # Converte para tensão (0-3.6V)
+    ph = 3.5 * voltage  # Aproximação linear para pH (0-14)
+    return ph
 
-def main():
-    connect_wifi()
-    client = connect_mqtt()
+def read_turbidity():
+    value = turbidity_sensor.read()  # Valor bruto (0-1023)
+    print("Turbidity raw value:", value)  # Debug: valor bruto do ADC
+    voltage = value * 3.6 / 1023  # Converte para tensão (0-3.6V)
+    turbidity = voltage * 100  # Aproximação para turbidez (0-100 NTU)
+    return turbidity
+
+def main(client=None):
     while True:
-        led_blue.on()  # Inicia leitura
-        ph = read_sensor(adc_ph, led_ph)
-        turb = read_sensor(adc_turb, led_turb)
-        temp = read_sensor(adc_temp, led_temp)
+        print("Starting new cycle...")
 
-        # Publica JSON
+        # Liga a bomba (relé) e simula o tempo de amostragem
+        relay.value(1)
+        print("Bomba ligada")
+        time.sleep(2)  
+
+        # Lê os sensores
+        ph = read_ph()
+        turbidity = read_turbidity()
+        temp = 25.0  # Valor fixo para temperatura
+
+        relay.value(0)
+        print("Bomba desligada")
+
         payload = ujson.dumps({
             "temperature": temp,
-            "turbidity": turb,
+            "turbidity": turbidity,
             "ph": ph
         })
+        print(f"Enviado: {payload}")
+     
+        try:
+            client.publish(MQTT_TOPIC, payload)
+        except Exception as e:
+            print("Erro ao publicar MQTT:", e)
 
-        client.publish(MQTT_TOPIC, payload)
-        print("Enviado:", payload)
+        time.sleep(5) 
 
-        led_blue.off()
-        time.sleep(10)  # Aguarda próximo ciclo
-
-main()
+try:
+    connect_wifi()
+    mqtt_client = connect_mqtt()
+    main(mqtt_client)
+except Exception as e:
+    print("Erro geral:", e)
+    while True:
+        time.sleep(1) 

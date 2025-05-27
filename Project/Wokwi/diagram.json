@@ -1,65 +1,69 @@
 {
   "version": 1,
-  "author": "Rafael Serinolli",
+  "author": "Serinolli",
   "editor": "wokwi",
   "parts": [
-    { "type": "wokwi-esp32-devkit-v1", "id": "esp32", "top": 0, "left": 0, "attrs": {} },
-    { "type": "wokwi-potentiometer", "id": "phSensor", "top": -145.3, "left": 134.2, "attrs": {} },
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": { "env": "micropython-20231227-v1.22.0" }
+    },
     {
       "type": "wokwi-potentiometer",
-      "id": "turbiditySensor",
-      "top": -58.9,
-      "left": 259,
-      "attrs": {}
-    },
-    { "type": "wokwi-potentiometer", "id": "tempSensor", "top": 46.7, "left": 335.8, "attrs": {} },
-    {
-      "type": "wokwi-led",
-      "id": "ledBlue",
-      "top": 140.4,
-      "left": 157.4,
-      "attrs": { "color": "blue" }
+      "id": "pot1",
+      "top": -150,
+      "left": -200,
+      "attrs": { "label": "pH Sensor" }
     },
     {
-      "type": "wokwi-led",
-      "id": "ledPH",
-      "top": -109.2,
-      "left": 205.4,
-      "attrs": { "color": "green" }
+      "type": "wokwi-potentiometer",
+      "id": "pot2",
+      "top": -150,
+      "left": -100,
+      "attrs": { "label": "Turbidity Sensor" }
     },
+    { "type": "board-ds18b20", "id": "temp1", "top": -150, "left": 0, "attrs": {} },
+    { "type": "wokwi-relay-module", "id": "relay1", "top": -150, "left": 100, "attrs": {} },
     {
-      "type": "wokwi-led",
-      "id": "ledTurbidity",
-      "top": -22.8,
-      "left": 330.2,
-      "attrs": { "color": "green" }
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -100,
+      "left": 50,
+      "attrs": { "value": "4700" }
     },
+    { "type": "wokwi-led", "id": "led1", "top": -50, "left": 150, "attrs": { "color": "red" } },
     {
-      "type": "wokwi-led",
-      "id": "ledTemp",
-      "top": 82.8,
-      "left": 416.6,
-      "attrs": { "color": "green" }
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 43.2,
+      "left": 133.85,
+      "rotate": 90,
+      "attrs": { "value": "220" }
     }
   ],
   "connections": [
-    [ "phSensor:GND", "esp32:GND.1", "black", [] ],
-    [ "phSensor:VCC", "esp32:3V3", "red", [] ],
-    [ "phSensor:SIG", "esp32:32", "blue", [] ],
-    [ "turbiditySensor:GND", "esp32:GND.1", "black", [] ],
-    [ "turbiditySensor:VCC", "esp32:3V3", "red", [] ],
-    [ "turbiditySensor:SIG", "esp32:33", "blue", [] ],
-    [ "tempSensor:GND", "esp32:GND.1", "black", [] ],
-    [ "tempSensor:VCC", "esp32:3V3", "red", [] ],
-    [ "tempSensor:SIG", "esp32:34", "blue", [] ],
-    [ "ledBlue:C", "esp32:GND.1", "black", [] ],
-    [ "ledBlue:A", "esp32:5", "blue", [] ],
-    [ "ledPH:C", "esp32:GND.1", "black", [] ],
-    [ "ledPH:A", "esp32:12", "green", [] ],
-    [ "ledTurbidity:C", "esp32:GND.1", "black", [] ],
-    [ "ledTurbidity:A", "esp32:14", "green", [] ],
-    [ "ledTemp:C", "esp32:GND.1", "black", [] ],
-    [ "ledTemp:A", "esp32:27", "green", [] ]
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "pot1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "pot1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "pot1:SIG", "esp:GPIO32", "green", [ "v0" ] ],
+    [ "pot2:VCC", "esp:3V3", "red", [ "v57.6", "h-68", "v-9.6" ] ],
+    [ "pot2:GND", "esp:GND.2", "black", [ "v0" ] ],
+    [ "pot2:SIG", "esp:GPIO33", "green", [ "v0" ] ],
+    [ "temp1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "temp1:GND", "esp:GND.3", "black", [ "v0" ] ],
+    [ "temp1:DQ", "esp:GPIO4", "yellow", [ "v0" ] ],
+    [ "temp1:DQ", "r1:1", "yellow", [ "v0" ] ],
+    [ "r1:2", "esp:3V3", "red", [ "v0" ] ],
+    [ "relay1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "relay1:GND", "esp:GND.4", "black", [ "v0" ] ],
+    [ "relay1:IN", "esp:GPIO17", "blue", [ "v0" ] ],
+    [ "relay1:NO", "led1:A", "green", [ "v0" ] ],
+    [ "led1:C", "r2:1", "black", [ "v0" ] ],
+    [ "r2:2", "esp:GND.5", "black", [ "v0" ] ],
+    [ "r2:2", "esp:19", "green", [ "h0" ] ]
   ],
   "dependencies": {}
 }
