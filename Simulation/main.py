@@ -12,6 +12,7 @@ def publish_data():
     temp = get_fake_temperature()
 
     client.publish("monitoramento/ph", ph)
+    client.publish("monitoramento/turbidez", turbidity)
     client.publish("monitoramento/temperatura", temp)
 
     print(f"Publicado: pH={ph}, Turbidez={turbidity}, Temperatura={temp}")
