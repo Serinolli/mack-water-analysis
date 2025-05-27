@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "author": "Rafael Serinolli",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp32", "top": 0, "left": 0, "attrs": {} },
+    { "type": "wokwi-potentiometer", "id": "phSensor", "top": -145.3, "left": 134.2, "attrs": {} },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "turbiditySensor",
+      "top": -58.9,
+      "left": 259,
+      "attrs": {}
+    },
+    { "type": "wokwi-potentiometer", "id": "tempSensor", "top": 46.7, "left": 335.8, "attrs": {} },
+    {
+      "type": "wokwi-led",
+      "id": "ledBlue",
+      "top": 140.4,
+      "left": 157.4,
+      "attrs": { "color": "blue" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledPH",
+      "top": -109.2,
+      "left": 205.4,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledTurbidity",
+      "top": -22.8,
+      "left": 330.2,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledTemp",
+      "top": 82.8,
+      "left": 416.6,
+      "attrs": { "color": "green" }
+    }
+  ],
+  "connections": [
+    [ "phSensor:GND", "esp32:GND.1", "black", [] ],
+    [ "phSensor:VCC", "esp32:3V3", "red", [] ],
+    [ "phSensor:SIG", "esp32:32", "blue", [] ],
+    [ "turbiditySensor:GND", "esp32:GND.1", "black", [] ],
+    [ "turbiditySensor:VCC", "esp32:3V3", "red", [] ],
+    [ "turbiditySensor:SIG", "esp32:33", "blue", [] ],
+    [ "tempSensor:GND", "esp32:GND.1", "black", [] ],
+    [ "tempSensor:VCC", "esp32:3V3", "red", [] ],
+    [ "tempSensor:SIG", "esp32:34", "blue", [] ],
+    [ "ledBlue:C", "esp32:GND.1", "black", [] ],
+    [ "ledBlue:A", "esp32:5", "blue", [] ],
+    [ "ledPH:C", "esp32:GND.1", "black", [] ],
+    [ "ledPH:A", "esp32:12", "green", [] ],
+    [ "ledTurbidity:C", "esp32:GND.1", "black", [] ],
+    [ "ledTurbidity:A", "esp32:14", "green", [] ],
+    [ "ledTemp:C", "esp32:GND.1", "black", [] ],
+    [ "ledTemp:A", "esp32:27", "green", [] ]
+  ],
+  "dependencies": {}
+}

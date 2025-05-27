@@ -1,0 +1,188 @@
+[
+    {
+        "id": "fc41a1440d2e88d4",
+        "type": "tab",
+        "label": "MQTT",
+        "disabled": false,
+        "info": "Conecta-se com o broker e recebe os dados para exibição via dash",
+        "env": []
+    },
+    {
+        "id": "mqtt_subscribe",
+        "type": "mqtt in",
+        "z": "fc41a1440d2e88d4",
+        "name": "Subscribe Water Quality",
+        "topic": "water/quality",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "4d343c5266fa7544",
+        "nl": false,
+        "rap": false,
+        "inputs": 0,
+        "x": 140,
+        "y": 440,
+        "wires": [
+            [
+                "parse_data"
+            ]
+        ]
+    },
+    {
+        "id": "parse_data",
+        "type": "function",
+        "z": "fc41a1440d2e88d4",
+        "name": "Parse Data",
+        "func": "let data = msg.payload;\n\nreturn [\n    { payload: data.temperature },\n    { payload: data.turbidity },\n    { payload: data.ph }\n];",
+        "outputs": 3,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 440,
+        "wires": [
+            [
+                "temp_gauge"
+            ],
+            [
+                "turbidity_gauge"
+            ],
+            [
+                "ph_gauge"
+            ]
+        ]
+    },
+    {
+        "id": "temp_gauge",
+        "type": "ui_gauge",
+        "z": "fc41a1440d2e88d4",
+        "name": "Temperature",
+        "group": "dashboard_group",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Temperature",
+        "label": "°C",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "40",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 810,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "turbidity_gauge",
+        "type": "ui_gauge",
+        "z": "fc41a1440d2e88d4",
+        "name": "Turbidity",
+        "group": "dashboard_group",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Turbidity",
+        "label": "NTU",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "100",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3838"
+        ],
+        "seg1": "",
+        "seg2": "",
+        "diff": false,
+        "className": "",
+        "x": 810,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "ph_gauge",
+        "type": "ui_gauge",
+        "z": "fc41a1440d2e88d4",
+        "name": "pH Level",
+        "group": "dashboard_group",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "pH Level",
+        "label": "pH",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 14,
+        "colors": [
+            "#ca3838",
+            "#5ce600",
+            "#ca3838"
+        ],
+        "seg1": "6",
+        "seg2": "8",
+        "diff": false,
+        "className": "",
+        "x": 810,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "4d343c5266fa7544",
+        "type": "mqtt-broker",
+        "name": "Mosquitto Broker",
+        "broker": "https://test.mosquitto.org",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": "150",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "dashboard_group",
+        "type": "ui_group",
+        "name": "Water Quality",
+        "tab": "dashboard_tab",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "dashboard_tab",
+        "type": "ui_tab",
+        "name": "Dashboard",
+        "icon": "dashboard",
+        "order": 1
+    }
+]
