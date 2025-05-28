@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "author": "Serinolli",
+  "author": "Rafael Serinolli",
   "editor": "wokwi",
   "parts": [
     {
@@ -37,19 +37,19 @@
   "connections": [
     [ "esp:TX", "$serialMonitor:RX", "", [] ],
     [ "esp:RX", "$serialMonitor:TX", "", [] ],
-    [ "pot1:VCC", "esp:3V3", "red", [ "v0" ] ],
-    [ "pot1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "pot1:VCC", "esp:3V3", "red", [ "v124.8", "h143.2", "v-19.2" ] ],
+    [ "pot1:GND", "esp:GND.1", "black", [ "v182.4", "h163.2", "v48" ] ],
     [ "pot2:VCC", "esp:3V3", "red", [ "v0" ] ],
-    [ "pot2:GND", "esp:GND.2", "black", [ "v0" ] ],
-    [ "relay1:VCC", "esp:3V3", "red", [ "h-9.6", "v163.2" ] ],
+    [ "pot2:GND", "esp:GND.2", "black", [ "v71.9", "h167" ] ],
+    [ "relay1:VCC", "esp:3V3", "red", [ "h-9.6", "v105.6", "h-115.35" ] ],
     [ "relay1:GND", "esp:GND.4", "black", [ "v0" ] ],
-    [ "relay1:IN", "esp:17", "blue", [ "v0" ] ],
+    [ "relay1:IN", "esp:17", "blue", [ "v191.8", "h-28.8" ] ],
     [ "pot1:SIG", "esp:33", "green", [ "v0" ] ],
     [ "pot2:SIG", "esp:32", "green", [ "v0" ] ],
     [ "esp:4", "temp1:DQ", "green", [ "h14.44", "v-134.4", "h-96" ] ],
     [ "temp1:DQ", "r1:1", "green", [ "v0" ] ],
     [ "r1:2", "temp1:VCC", "red", [ "v-9.6", "h-68.4" ] ],
-    [ "temp1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "temp1:VCC", "esp:3V3", "red", [ "v115.2", "h-28.95" ] ],
     [ "temp1:GND", "esp:GND.2", "black", [ "v86.4", "h86.4" ] ]
   ],
   "dependencies": {}
