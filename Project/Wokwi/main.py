@@ -1,29 +1,43 @@
-print("Code started at target ESP32!")
+print("Iniciando ESP32 - Monitoramento da Qualidade da Água")
 
 from machine import Pin, ADC
+import onewire, ds18x20
 import time
 import network
 import ujson
 from umqtt.simple import MQTTClient
 
-ph_sensor = ADC(Pin(32))  # Potenciômetro para pH (GPIO32)
-turbidity_sensor = ADC(Pin(33))  # Potenciômetro para turbidez (GPIO33)
-relay = Pin(17, Pin.OUT)  # Relé (GPIO17)
+# --- Configuração dos pinos ---
+ph_sensor = ADC(Pin(32))
+turbidity_sensor = ADC(Pin(33))
+ds_pin = Pin(4)
+relay = Pin(17, Pin.OUT)
 
+# --- ADC: 12 bits (0-4095), tensão até 3.6V ---
 for adc in [ph_sensor, turbidity_sensor]:
-    adc.atten(ADC.ATTN_11DB)  # Atenuação para 0-3.6V
-    adc.width(ADC.WIDTH_10BIT)  # Resolução de 10 bits (0-1023)
+    adc.atten(ADC.ATTN_11DB)
+    adc.width(ADC.WIDTH_12BIT)
 
-# Wi-fi
-SSID = "Wokwi-GUEST"  
+# --- DS18B20 ---
+ow = onewire.OneWire(ds_pin)
+ds = ds18x20.DS18X20(ow)
+roms = ds.scan()
+if roms:
+    print("DS18B20 detectado:", roms)
+else:
+    print("⚠️ Nenhum DS18B20 encontrado!")
+
+# --- Wi-Fi ---
+SSID = "Wokwi-GUEST"
 PASSWORD = ""
 
-# MQTT
+# --- MQTT ---
 MQTT_BROKER = "test.mosquitto.org"
 MQTT_PORT = 1883
 MQTT_TOPIC = "water/quality"
 MQTT_CLIENT_ID = "esp32_water_monitor"
 
+# --- Conexão Wi-Fi ---
 def connect_wifi():
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -31,64 +45,86 @@ def connect_wifi():
     print("Conectando ao Wi-Fi...")
     while not wlan.isconnected():
         time.sleep(0.5)
-    print("Conectado:", wlan.ifconfig())
+    print("Conectado! IP:", wlan.ifconfig()[0])
 
+# --- Conexão MQTT ---
 def connect_mqtt():
     client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER, port=MQTT_PORT)
     client.connect()
-    print("MQTT conectado.")
+    print("Conectado ao MQTT.")
     return client
 
+# --- Leitura com média para estabilidade ---
+def read_adc(adc, samples=10):
+    total = 0
+    for _ in range(samples):
+        total += adc.read()
+        time.sleep_ms(5)
+    return total // samples
+
 def read_ph():
-    value = ph_sensor.read()  # Valor bruto (0-1023)
-    print("pH raw value:", value)  # Debug: valor bruto do ADC
-    voltage = value * 3.6 / 1023  # Converte para tensão (0-3.6V)
-    ph = 3.5 * voltage  # Aproximação linear para pH (0-14)
-    return ph
+    raw = read_adc(ph_sensor)
+    voltage = raw * 3.6 / 4095
+    ph = 3.5 * voltage
+    return round(ph, 2)
 
 def read_turbidity():
-    value = turbidity_sensor.read()  # Valor bruto (0-1023)
-    print("Turbidity raw value:", value)  # Debug: valor bruto do ADC
-    voltage = value * 3.6 / 1023  # Converte para tensão (0-3.6V)
-    turbidity = voltage * 100  # Aproximação para turbidez (0-100 NTU)
-    return turbidity
+    raw = read_adc(turbidity_sensor)
+    voltage = raw * 3.6 / 4095
+    turbidity = voltage * 100
+    return round(turbidity, 2)
 
-def main(client=None):
+def read_temperature():
+    if not roms:
+        return 25.0  # fallback
+    try:
+        ds.convert_temp()
+        time.sleep_ms(750)
+        temp = ds.read_temp(roms[0])
+        return round(temp, 2)
+    except:
+        return 25.0
+
+# --- Loop principal ---
+def main(client):
     while True:
-        print("Starting new cycle...")
+        print("\n--- Novo Ciclo ---")
 
-        # Liga a bomba (relé) e simula o tempo de amostragem
+        # Liga bomba (ativo-baixo)
         relay.value(1)
         print("Bomba ligada")
-        time.sleep(2)  
+        time.sleep(2)
 
-        # Lê os sensores
+        # Leitura dos sensores
         ph = read_ph()
         turbidity = read_turbidity()
-        temp = 25.0  # Valor fixo para temperatura
+        temp = read_temperature()
 
+        # Desliga bomba (nível alto)
         relay.value(0)
         print("Bomba desligada")
 
+        # Publica dados
         payload = ujson.dumps({
             "temperature": temp,
             "turbidity": turbidity,
             "ph": ph
         })
-        print(f"Enviado: {payload}")
-     
+
         try:
             client.publish(MQTT_TOPIC, payload)
+            print("Publicado:", payload)
         except Exception as e:
-            print("Erro ao publicar MQTT:", e)
+            print("Erro MQTT:", e)
 
-        time.sleep(5) 
+        time.sleep(5)
+
 
 try:
     connect_wifi()
     mqtt_client = connect_mqtt()
     main(mqtt_client)
 except Exception as e:
-    print("Erro geral:", e)
+    print("Erro principal:", e)
     while True:
-        time.sleep(1) 
+        time.sleep(1)
