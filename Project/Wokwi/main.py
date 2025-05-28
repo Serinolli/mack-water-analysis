@@ -14,7 +14,7 @@ turbidity_sensor = ADC(Pin(33))
 ds_pin = Pin(4)
 ds_sensor = ds18x20.DS18X20(onewire.OneWire(ds_pin))
 roms = ds_sensor.scan()
-print('Found DS devices: ', roms)
+print('Dispositivos DS encontrados:', roms)
 
 relay = Pin(17, Pin.OUT)
 
@@ -40,12 +40,12 @@ def connect_wifi():
     print("Conectando ao Wi-Fi...")
     while not wlan.isconnected():
         time.sleep(0.5)
-    print("Conectado! IP:", wlan.ifconfig()[0])
+    print("Wi-Fi conectado! IP:", wlan.ifconfig()[0])
 
 def connect_mqtt():
     client = MQTTClient(MQTT_CLIENT_ID, MQTT_BROKER, port=MQTT_PORT)
     client.connect()
-    print("Conectado ao MQTT.")
+    print("Conectado ao broker MQTT.")
     return client
 
 def read_adc(adc, samples=10):
@@ -77,12 +77,13 @@ def read_temperature():
         return 25.0
 
 def main(client):
+    last_payload = None
     while True:
-        print("\n--- Novo Ciclo ---")
+        print("\n--- Novo ciclo de leitura ---")
 
         # Liga bomba 
         relay.value(1)
-        print("Bomba ligada")
+        print("Bomba ligada.")
         time.sleep(2)
 
         # Leitura dos sensores
@@ -92,29 +93,34 @@ def main(client):
 
         # Desliga bomba 
         relay.value(0)
-        print("Bomba desligada")
+        print("Bomba desligada.")
 
-        # Publica dados
-        payload = ujson.dumps({
+        # Monta dados
+        payload_dict = {
             "temperature": temp,
             "turbidity": turbidity,
             "ph": ph
-        })
+        }
+        payload = ujson.dumps(payload_dict)
 
-        try:
-            client.publish(MQTT_TOPIC, payload)
-            print("Publicado:", payload)
-        except Exception as e:
-            print("Erro MQTT:", e)
+        # Envia para o broker
+        if payload != last_payload:
+            try:
+                client.publish(MQTT_TOPIC, payload)
+                print("Dados publicados:", payload)
+                last_payload = payload
+            except Exception as e:
+                print("Erro ao publicar no MQTT:", e)
+        else:
+            print("Sem alterações nos dados.")
 
         time.sleep(5)
-
 
 try:
     connect_wifi()
     mqtt_client = connect_mqtt()
     main(mqtt_client)
 except Exception as e:
-    print("Erro principal:", e)
+    print("Erro na execução principal:", e)
     while True:
         time.sleep(1)
