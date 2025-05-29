@@ -6,6 +6,7 @@ import time
 import network
 import ujson
 from umqtt.simple import MQTTClient
+import time
 
 # --- Configuração dos pinos ---
 ph_sensor = ADC(Pin(32))
@@ -71,7 +72,6 @@ def read_temperature():
     try:
         ds_sensor.convert_temp()
         temp = ds_sensor.read_temp(roms[0])
-        time.sleep(5)
         return round(temp, 2)
     except:
         return 25.0
@@ -81,21 +81,41 @@ def main(client):
     while True:
         print("\n--- Novo ciclo de leitura ---")
 
-        # Liga bomba 
+        # Medida do tempo de resposta do atuador (relé)
+        start_relay = time.ticks_ms()
         relay.value(1)
-        print("Bomba ligada.")
-        time.sleep(2)
+        relay_end = time.ticks_ms()
+        relay_time = time.ticks_diff(relay_end, start_relay)
+        print(f"Tempo de resposta do atuador (relé): {relay_time} ms")
 
-        # Leitura dos sensores
+        time.sleep(2)  # bomba ligada
+
+        # Medidas de tempo para sensores
+        # Sensor de pH
+        start_ph = time.ticks_ms()
         ph = read_ph()
-        turbidity = read_turbidity()
-        temp = read_temperature()
+        end_ph = time.ticks_ms()
+        ph_duration = time.ticks_diff(end_ph, start_ph)
+        print(f"Tempo de leitura do sensor de pH: {ph_duration} ms")
 
-        # Desliga bomba 
+        # Sensor de turbidez
+        start_turb = time.ticks_ms()
+        turbidity = read_turbidity()
+        end_turb = time.ticks_ms()
+        turb_duration = time.ticks_diff(end_turb, start_turb)
+        print(f"Tempo de leitura do sensor de turbidez: {turb_duration} ms")
+
+        # Sensor de temperatura
+        start_temp = time.ticks_ms()
+        temp = read_temperature()
+        end_temp = time.ticks_ms()
+        temp_duration = time.ticks_diff(end_temp, start_temp)
+        print(f"Tempo de leitura do sensor de temperatura: {temp_duration} ms")
+
         relay.value(0)
         print("Bomba desligada.")
 
-        # Monta dados
+        # Monta e envia os dados
         payload_dict = {
             "temperature": temp,
             "turbidity": turbidity,
@@ -103,16 +123,17 @@ def main(client):
         }
         payload = ujson.dumps(payload_dict)
 
-        # Envia para o broker
-        if payload != last_payload:
-            try:
-                client.publish(MQTT_TOPIC, payload)
-                print("Dados publicados:", payload)
-                last_payload = payload
-            except Exception as e:
-                print("Erro ao publicar no MQTT:", e)
-        else:
-            print("Sem alterações nos dados.")
+        # Medida do tempo até publicação no MQTT
+        start_pub = time.ticks_ms()
+        try:
+            client.publish(MQTT_TOPIC, payload)
+            end_pub = time.ticks_ms()
+            pub_time = time.ticks_diff(end_pub, start_pub)
+            print(f"Dados publicados: {payload}")
+            print(f"Tempo de envio MQTT: {pub_time} ms")
+            last_payload = payload
+        except Exception as e:
+            print("Erro ao publicar no MQTT:", e)
 
         time.sleep(5)
 
