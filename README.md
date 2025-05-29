@@ -16,9 +16,10 @@ A implementação foi feita em **MicroPython**, com simulação no ambiente [Wok
 ## Como usar
 
 ### 1. Simulação via Wokwi
-Abra o projeto na plataforma Wokwi com suporte ao ESP32 (arquivo `diagram.json`):
-- Conecte os sensores simulados e o relé conforme o circuito
-- Rode o código `main.py` com MicroPython
+Inicie um novo projeto na plataforma Wokwi com suporte ao ESP32 e MicroPython :
+- No arquivo `diagram.json`, altere a propriedade `parts` pela contidade neste [arquivo](Project/Wokwi/diagram.json)
+- Ainda no arquivo `diagram.json`, substitua a propriedade `connections` pela deste [arquivo](Project/Wokwi/diagram.json)
+- Substitua o código main.py gerado no novo projeto pelo encontrado [aqui](Project/Wokwi/main.py)
 
 ### 2. Execução com hardware real
 - Alimente o ESP32 com 5V
